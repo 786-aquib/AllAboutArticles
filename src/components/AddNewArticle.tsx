@@ -5,6 +5,8 @@ import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../redux/store';
 import { addArticle } from '../redux/articleSlice';
 import { useForm, SubmitHandler } from 'react-hook-form';
+import WebsiteName from './WebsiteName';
+import AvatarDemo from './Avatar';
 
 // Define the TypeScript interface for form inputs
 interface IFormInput {
@@ -20,7 +22,11 @@ const CreateNewArticle = () => {
   });
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const [openSnackbar, setOpenSnackbar] = useState(false); // Snackbar state
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | null }>({
+    open: false,
+    message: '',
+    severity: null,
+  });
 
   // Define the submit handler
   const onSubmit: SubmitHandler<IFormInput> = async (data) => {
@@ -54,18 +60,46 @@ const CreateNewArticle = () => {
 
       const result = await response.json();
       dispatch(addArticle(result.article));
-      setOpenSnackbar(true); // Open the success notification
+      setSnackbar({ open: true, message: 'Article created successfully!', severity: 'success' });
       navigate('/Home'); // Redirect after successful creation
     } catch (error) {
       console.error('Error creating article:', error);
+      setSnackbar({ open: true, message: 'Error creating article.', severity: 'error' });
     }
   };
 
   const handleCloseSnackbar = () => {
-    setOpenSnackbar(false);
+    setSnackbar({ ...snackbar, open: false });
   };
 
   return (
+    <div> 
+      <div style={{ overflow: 'hidden', margin: 0, padding: 0 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: 0.5, // Optional: Add padding for spacing
+          overflow: 'hidden', // Ensure no overflow
+          width: '100%', // Ensure Box takes full width
+          bgcolor: 'aliceblue',
+        }}
+      >
+        <WebsiteName />
+        
+        <Box 
+        sx={ {
+             display: 'flex',
+             marginRight: 2,
+             
+        }}
+        >
+            <AvatarDemo />
+            
+        </Box>
+        </Box>
+    </div>
     <Container
       maxWidth="sm"
       style={{
@@ -77,7 +111,7 @@ const CreateNewArticle = () => {
     >
       <form
         onSubmit={handleSubmit(onSubmit)}
-        style={{
+        style={{                           
           width: '100%',
           padding: '1rem',
           backgroundColor: '#f9f9f9',
@@ -114,7 +148,7 @@ const CreateNewArticle = () => {
           <TextField
             label="Body"
             fullWidth
-            multiline
+            multiline   
             rows={6}
             {...register('body', {
               required: 'Body is required'
@@ -150,12 +184,19 @@ const CreateNewArticle = () => {
       </form>
 
       <Snackbar
-        open={openSnackbar}
+        open={snackbar.open}
         onClose={handleCloseSnackbar}
-        message="Article created successfully!"
+        message={snackbar.message}
         autoHideDuration={3000}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }} // Position Snackbar at top right
+        sx={{
+          '& .MuiSnackbarContent-root': {
+            backgroundColor: snackbar.severity === 'error' ? 'red' : 'green',
+          },
+        }}
       />
     </Container>
+    </div>
   );
 };
 
