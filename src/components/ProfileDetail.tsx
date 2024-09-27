@@ -1,27 +1,65 @@
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Box, CircularProgress, Typography, Stack, Card, Avatar, CardContent, CardActions, Grid } from '@mui/material';
-import { RootState, AppDispatch } from '../redux/store';
-import { fetchProfile } from '../redux/articleSlice'; 
+import React, { useEffect, useState } from 'react';
+import { Box, CircularProgress, Typography, Stack, Avatar, Grid } from '@mui/material';
+import { useParams } from 'react-router-dom';
 import AvatarDemo2 from './Avatar2';
 import WebsiteName from './WebsiteName';
 import ArticleCard from './ArticleCard';
+import { followUser, UnfollowUser } from '../redux/articleSlice';
+import { AppDispatch } from '../redux/store';
+import { useDispatch } from 'react-redux';
+import AddIcon from '@mui/icons-material/Add';
 
-const My_Profile: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { profile, profileStatus, profileError, articles } = useSelector((state: RootState) => state.articles);
+const Profiledetail: React.FC = () => {
+  const { username } = useParams<{ username: string }>();
+  const [profile, setProfile] = useState<any>(null);
+  const [articles, setArticles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isFollow, setIsFollow] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      const username = localStorage.getItem('username');
+    const fetchProfileData = async () => {
       if (username) {
-        dispatch(fetchProfile(username));
-      }
-    }
-  }, [dispatch]);
+        try {
+          const profileResponse = await fetch(`https://api.realworld.io/api/profiles/${username}`);
+          if (!profileResponse.ok) {
+            throw new Error('Failed to fetch profile');
+          }
+          const profileData = await profileResponse.json();
+          setProfile(profileData.profile);
 
-  if (profileStatus === 'loading') {
+          const articlesResponse = await fetch(`https://api.realworld.io/api/articles?author=${username}`);
+          if (!articlesResponse.ok) {
+            throw new Error('Failed to fetch articles');
+          }
+          const articlesData = await articlesResponse.json();
+          setArticles(articlesData.articles);
+        } catch (err) {
+          setError("Error");
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchProfileData();
+  }, [username]);
+
+  const handleFollow = () => {
+    if (username) {
+      // dispatch(followUser(username));
+      setIsFollow(true);
+    }
+  };
+
+  const handleUnfollow = () => { 
+    if (username) {
+      // dispatch(UnfollowUser(username));
+      setIsFollow(false);
+    }
+  };
+
+  if (loading) {
     return (
       <Box
         sx={{
@@ -36,19 +74,19 @@ const My_Profile: React.FC = () => {
     );
   }
 
-  if (profileStatus === 'failed') {
+  if (error) {
     return (
       <Box
         sx={{
           display: 'flex',
-          flexDirection: 'column',                                            
+          flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
           height: '100vh',
         }}
       >
-        <Typography color="error">{profileError}</Typography>
-      </Box>                                         
+        <Typography color="error">{error}</Typography>
+      </Box>
     );
   }
 
@@ -79,70 +117,35 @@ const My_Profile: React.FC = () => {
           px: { xs: 2, sm: 3, md: 4 },
         }}
       >
-        <Card             
-          sx={{
-            width: '100%',
-            maxWidth: 600,
-            boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-            borderRadius: 2,
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            position: 'relative',
-            border: '1px solid #ddd',
-            bgcolor: 'whitesmoke',                                       
-            mx: 'auto',
-            minHeight: 200,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: 1.5,
-            }}
-          >
-            <Stack direction="row" spacing={1.5} sx={{ flex: 1 }}>
-              <Avatar alt={profile?.username} src={profile?.image || 'default-img URL'} sx={{ width: 50, height: 50 }} />
-              <Box>
-                <Typography
-                  sx={{
-                    cursor: 'pointer',
-                    fontSize: '1rem',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 1,
-                    WebkitBoxOrient: 'vertical',
-                    lineHeight: 1.2,
-                    marginTop: 0.5,
-                    marginLeft: 1,
-                  }}
-                >
-                  {profile?.username}
+        {/* Profile Section */}
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Avatar
+            alt={profile?.username}
+            src={profile?.image || 'default-img URL'}
+            sx={{ width: 100, height: 100, marginBottom: 2 }}
+          />
+          <Stack spacing={1} alignItems="center">
+            <Typography variant="h6">{profile?.username}</Typography>
+            <Typography variant="body2" color="text.secondary">{profile?.bio}</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+              {isFollow ? (
+                <Typography sx={{ fontSize: '1rem', color: '#670a8e' }} onClick={handleUnfollow}>
+                  Following
                 </Typography>
-                <Typography
-                  sx={{
-                    color: 'text.secondary',
-                    fontSize: '0.75rem',
-                    marginLeft: 1,
-                  }}
-                >
-                  {profile?.bio}
-                </Typography>
-              </Box>
-            </Stack>
-          </Box>
-          <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 1 }} />
-          <CardActions sx={{ display: 'flex', justifyContent: 'space-between', padding: 1 }} />
-        </Card>
+              ) : (
+                <Stack direction="row" spacing={0.2} alignItems="center">
+                  <AddIcon color="success" fontSize="small" />
+                  <Typography sx={{ marginLeft: 3, fontSize: '1rem', color: 'green' }} onClick={handleFollow}>
+                    Follow
+                  </Typography>
+                </Stack>
+              )}
+            </Box>
+          </Stack>
+        </Box>
         
         {/* Articles Section */}
         <Box sx={{ mt: 3, width: '100%' }}>
-          <Typography variant="h5" sx={{ mb: 2 }}>
-            My Articles
-          </Typography>
           <Grid container spacing={2}>
             {articles.map(article => (
               <Grid item xs={12} sm={6} key={article.slug}>
@@ -167,4 +170,4 @@ const My_Profile: React.FC = () => {
   );
 };
 
-export default My_Profile;
+export default Profiledetail;

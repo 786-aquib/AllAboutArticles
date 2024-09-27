@@ -30,7 +30,7 @@ const AvatarDemo = () => {
   const id = open ? "simple-popover" : undefined;
 
   const navigateToProfile = () => {
-    navigate("/Profile");
+    navigate("/My_Profile");
   }                                            
 
   const navigateToSignin = () => {

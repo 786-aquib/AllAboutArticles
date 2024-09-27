@@ -87,7 +87,15 @@ const CreateNewArticle = () => {
         }}
       >
         <WebsiteName />
-        
+        <div
+        style={{
+            backgroundColor: 'blanchedalmond',
+            fontVariant: 'traditional',
+            fontSize: 20,
+        }}
+        >
+            Create New Article
+        </div>
         <Box 
         sx={ {
              display: 'flex',

@@ -18,6 +18,7 @@ interface Comment {
 const CommentsSection: React.FC<{ slug: string }> = ({ slug }) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentTxt, setCommentTxt] = useState<string>("");
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -30,7 +31,28 @@ const CommentsSection: React.FC<{ slug: string }> = ({ slug }) => {
         console.error("Error fetching comments:", error);
       }
     };
+
+    const fetchCurrentUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const response = await axios.get(
+          'https://api.realworld.io/api/user',
+          {
+            headers: {
+              'Authorization': `Token ${token}`,
+            },
+          }
+        );
+        setCurrentUser(response.data.user.username);
+      } catch (error) {
+        console.error("Error fetching current user:", error);
+      }
+    };
+
     fetchComments();
+    fetchCurrentUser();
   }, [slug]);
 
   const handleSend = async () => {
@@ -65,6 +87,18 @@ const CommentsSection: React.FC<{ slug: string }> = ({ slug }) => {
 
   const DeleteComment = async (id: number) => {
     try {
+      const commentToDelete = comments.find(comment => comment.id === id);
+      if (!commentToDelete || !currentUser) {
+        console.error("Comment not found or user not authenticated!");
+        return;
+      }
+
+      // Check if the current user is the author of the comment
+      if (commentToDelete.author.username !== currentUser) {
+        console.error("You cannot delete this comment.");
+        return;
+      }
+
       const token = localStorage.getItem('token');
       if (!token) {
         console.error("Authentication token doesn't exist!");
@@ -114,19 +148,21 @@ const CommentsSection: React.FC<{ slug: string }> = ({ slug }) => {
                 <Typography variant="body1" fontWeight="bold">
                   {comment.author.username}
                 </Typography>
-                <Button
-                  onClick={() => DeleteComment(comment.id)}
-                  variant='text'
-                  sx={{
-                    position: 'absolute',
-                    right: 0,
-                    top: 0,
-                    fontSize: '0.75rem',
-                    color: 'red',
-                  }}
-                >
-                  Delete
-                </Button>
+                {currentUser === comment.author.username && (
+                  <Button
+                    onClick={() => DeleteComment(comment.id)}
+                    variant='text'
+                    sx={{
+                      position: 'absolute',
+                      right: 0,
+                      top: 0,
+                      fontSize: '0.75rem',
+                      color: 'red',
+                    }}
+                  >
+                    Delete
+                  </Button>
+                )}
               </Box>
               <Typography variant="body2" sx={{ mt: 0.5 }}>
                 {comment.body}

@@ -11,6 +11,9 @@ import AddComment from './AddComment';
 import { grey } from '@mui/material/colors';
 import { favoriteArticle, followUser, UnfollowUser } from '../redux/articleSlice';
 import { AppDispatch } from '../redux/store';
+import WebsiteName from './WebsiteName';
+import AvatarDemo2 from './Avatar2';
+
 
 // Define the Article interface
 interface Article {
@@ -26,6 +29,7 @@ interface Article {
   favoritesCount: number;
 }
 
+
 function AllArticleData() {
   const { slug } = useParams<{ slug: string }>();
   const dispatch = useDispatch<AppDispatch>();
@@ -33,6 +37,8 @@ function AllArticleData() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFollowed, setIsFollowed] = useState<boolean | null>(null);
+
+
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -50,7 +56,7 @@ function AllArticleData() {
       }
     };
 
-    if (slug) {
+    if (slug){
       fetchArticle();
     }
   }, [slug]);
@@ -80,6 +86,21 @@ function AllArticleData() {
   if (!article) return <div>No article found</div>;
 
   return (
+    <div>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 0.5, bgcolor: 'aliceblue' }}>
+        <WebsiteName /> 
+        <div
+        style={{
+            backgroundColor: 'blanchedalmond',
+            fontVariant: 'traditional',
+            fontSize: 20,
+        }}
+        >
+          Wishlisted Items
+          </div>                                     
+        <AvatarDemo2 />
+      </Box>
+    
     <Box 
       sx={{ 
         display: 'flex', 
@@ -162,6 +183,7 @@ function AllArticleData() {
         <AddComment slug={article.slug} />
       </Box>
     </Box>
+  </div>
   );
 }
 
